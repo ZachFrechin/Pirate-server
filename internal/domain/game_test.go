@@ -72,3 +72,37 @@ func TestAccusationEliminatesAtThree(t *testing.T) {
 		t.Fatalf("accusations=%d", b.Accusations)
 	}
 }
+
+func TestEndConditions_AllGoodEliminated_ImpostorWins(t *testing.T) {
+	g := NewLobbyGame()
+	g.Players = []*Player{
+		{ID: "a", Name: "A"},
+		{ID: "b", Name: "B"},
+		{ID: "c", Name: "C"},
+	}
+	if err := g.Start(); err != nil {
+		t.Fatal(err)
+	}
+
+	// Make roles deterministic for this test.
+	a, _ := g.mustPlayer("a")
+	b, _ := g.mustPlayer("b")
+	c, _ := g.mustPlayer("c")
+	a.Role = RoleImpostor
+	b.Role = RoleGood
+	c.Role = RoleGood
+
+	// Eliminate all good players while an impostor remains alive.
+	b.Eliminated = true
+	c.Eliminated = true
+
+	if err := g.checkEndConditions(); err != nil {
+		t.Fatal(err)
+	}
+	if g.Status != GameStatusFinished {
+		t.Fatalf("status=%s want=%s", g.Status, GameStatusFinished)
+	}
+	if g.Winner != WinnerImpostor {
+		t.Fatalf("winner=%s want=%s", g.Winner, WinnerImpostor)
+	}
+}

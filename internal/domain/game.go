@@ -349,8 +349,11 @@ func (g *Game) checkEndConditions() error {
 	if g.Status != GameStatusInGame {
 		return nil
 	}
-	// If all impostors are eliminated => good wins.
+	// Team win conditions:
+	// - If all impostors are eliminated => good wins.
+	// - If all good players are eliminated while impostors remain => impostors win.
 	aliveImpostors := 0
+	aliveGood := 0
 	alivePlayers := 0
 	for _, p := range g.Players {
 		if p == nil || p.Eliminated {
@@ -359,6 +362,8 @@ func (g *Game) checkEndConditions() error {
 		alivePlayers++
 		if p.Role == RoleImpostor {
 			aliveImpostors++
+		} else {
+			aliveGood++
 		}
 	}
 	if alivePlayers == 0 {
@@ -369,6 +374,11 @@ func (g *Game) checkEndConditions() error {
 	if aliveImpostors == 0 {
 		g.Status = GameStatusFinished
 		g.Winner = WinnerGood
+		return nil
+	}
+	if aliveGood == 0 {
+		g.Status = GameStatusFinished
+		g.Winner = WinnerImpostor
 		return nil
 	}
 	return nil
